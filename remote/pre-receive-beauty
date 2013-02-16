@@ -1,0 +1,94 @@
+#!/usr/bin/env bash
+#
+# patches/commits beauty.
+# (linux only, because of some options for grep)
+#
+# And it can't test code for newly create refs.
+# But test new commits separatly, unlike update hook.
+#
+# But seems that git server save ref, and git status doesn't show any changes.
+#
+# hooks.trailingspaces
+#   This boolean sets whether commit can have trailing spaces.
+#   By default they won't be allowed.
+# hooks.numberofcharsperline
+#   This int sets number of chars per commit line.
+#   By default 80 characters.
+# hooks.regexpforcommittitle
+#   This install regexp for commit title (first line of message), if not
+#   matched regexp, return 0. Regexp for $(git grep -E)
+#   By default: empty
+#
+
+# --- Safety check
+if [ -z "$GIT_DIR" ]; then
+    echo "Don't run this script from the command line." >&2
+    exit 1
+fi
+
+# --- Config
+trailingspaces=$(git config --bool hooks.trailingspaces)
+numberofcharsperline=$(git config --int hooks.numberofcharsperline)
+regexpforcommittitle=$(git config hooks.regexpforcommittitle)
+
+# Initialize some default values
+if [[ $numberofcharsperline -eq 0 ]]; then
+    numberofcharsperline=80
+fi
+
+zero="0000000000000000000000000000000000000000"
+
+validate_rev()
+{
+    # --- Command line
+    refname="$1"
+    oldrev="$2"
+    newrev="$3"
+
+    if [ -z "$refname" -o -z "$oldrev" -o -z "$newrev" ]; then
+        echo "Usage: $0 <ref> <oldrev> <newrev>" >&2
+        exit 1
+    fi
+
+    # Newly created ref. 
+    if [ "$oldrev" = "$zero" ]; then
+        echo "*** $refname newly created. And can't be tested."
+        exit 0
+    fi
+
+    # hooks.numberofcharsperline
+    if [[ $numberofcharsperline -gt 0 ]]; then
+        long_subject=$(git log --pretty=%s $oldrev..$newrev | grep -E ".{$(($numberofcharsperline + 1))}" | head -n1)
+        if [ -n "$long_subject" ]; then
+        echo "*** Commit subject over ${numberofcharsperline} character in $oldrev..$newrev:"
+        echo "    $long_subject"
+        exit 1
+        fi
+    fi
+
+    # hooks.regexpforcommittitle
+    if [ ! -z $regexpforcommittitle ]; then
+        not_matched=$(git log --pretty=%s $oldrev..$newrev | grep -v -E $regexpforcommittitle | head -n1)
+        if [ -n "$not_matched" ]; then
+        echo "*** Commit subject not matched '${regexpforcommittitle}' pattern in $oldrev..$newrev:"
+        echo "    $not_matched"
+        exit 1
+        fi
+    fi
+
+    # hooks.trailingspaces
+    if [ "$trailingspaces" != "false" ]; then
+        line_with_trailing_spaces=$(git diff $oldrev..$newrev | grep '^+' | grep -P '(^[\t ]|[\t ]$)' | wc -l)
+        if [[ $line_with_trailing_spaces -gt 0 ]]; then
+            echo "*** New changes, contain trailing spaces in $oldrev..$newrev:"
+            echo "    Counted: $line_with_trailing_spaces lines. Fix it first."
+            exit 1
+        fi
+    fi
+}
+
+while read oldrev newrev refname; do
+    validate_rev $refname $oldrev $newrev
+done
+
+exit 0
