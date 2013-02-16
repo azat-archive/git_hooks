@@ -38,7 +38,7 @@ fi
 
 zero="0000000000000000000000000000000000000000"
 
-validate_rev()
+validate_ref()
 {
     # --- Command line
     refname="$1"
@@ -88,7 +88,7 @@ validate_rev()
 }
 
 while read oldrev newrev refname; do
-    validate_rev $refname $oldrev $newrev
+    validate_ref $refname $oldrev $newrev
 done
 
 exit 0
