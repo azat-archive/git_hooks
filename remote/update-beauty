@@ -3,6 +3,8 @@
 # patches/commits beauty.
 # (linux only, because of some options for grep)
 #
+# And it can't test code for newly create refs.
+#
 # hooks.trailingspaces
 #   This boolean sets whether commit can have trailing spaces.
 #   By default they won't be allowed.
@@ -43,13 +45,11 @@ if [[ $numberofcharsperline -eq 0 ]]; then
     numberofcharsperline=80
 fi
 
-# --- Check types
-# if $newrev is 0000...0000, it's a commit to delete a ref.
+# Newly created ref. 
 zero="0000000000000000000000000000000000000000"
-if [ "$newrev" = "$zero" ]; then
-    newrev_type=delete
-else
-    newrev_type=$(git cat-file -t $newrev)
+if [ "$oldrev" = "$zero" ]; then
+    echo "*** $refname newly created."
+    exit 0
 fi
 
 # hooks.numberofcharsperline
