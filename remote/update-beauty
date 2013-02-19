@@ -16,6 +16,9 @@
 #   This install regexp for commit title (first line of message), if not
 #   matched regexp, return 0. Regexp for $(git grep -E)
 #   By default: empty
+# hooks.nobeatymergecommits
+#   This will don't check merge commits
+#   By default: false
 #
 
 # --- Command line
@@ -38,6 +41,7 @@ fi
 trailingspaces=$(git config --bool hooks.trailingspaces)
 numberofcharsperline=$(git config --int hooks.numberofcharsperline)
 regexpforcommittitle=$(git config hooks.regexpforcommittitle)
+nobeatymergecommits=$(git config --bool hooks.nobeatymergecommits)
 
 # Initialize some default values
 if [[ $numberofcharsperline -eq 0 ]]; then
@@ -53,6 +57,11 @@ validate_ref()
     if [ -z "$ref" ]; then
         echo "Usage: $0 <ref>" >&2
         exit 1
+    fi
+
+    # hooks.nobeatymergecommits
+    if [ "$nobeatymergecommits" != "false" ] && [[ $(git show --pretty=%p $ref | head -n1 | awk '{print NF}') -gt 1 ]]; then
+        return
     fi
 
     # hooks.numberofcharsperline
