@@ -15,6 +15,9 @@
 #   This install regexp for commit title (first line of message), if not
 #   matched regexp, return 0. Regexp for $(git grep -E)
 #   By default: empty
+# hooks.verbose
+#   Some useful information for debugging
+#   By default: false
 #
 
 # --- Command line
@@ -39,10 +42,15 @@ fi
 trailingspaces=$(git config --bool hooks.trailingspaces)
 numberofcharsperline=$(git config --int hooks.numberofcharsperline)
 regexpforcommittitle=$(git config hooks.regexpforcommittitle)
+verbose=$(git config hooks.verbose)
 
 # Initialize some default values
 if [[ $numberofcharsperline -eq 0 ]]; then
     numberofcharsperline=80
+fi
+
+if [ "$verbose" != "false" ]; then
+    "We have $oldrev..$newrev for $refname range"
 fi
 
 # Newly created ref. 
