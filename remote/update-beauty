@@ -19,6 +19,9 @@
 # hooks.nobeatymergecommits
 #   This will don't check merge commits
 #   By default: false
+# hooks.verbose
+#   Some useful information for debugging
+#   By default: false
 #
 
 # --- Command line
@@ -42,6 +45,7 @@ trailingspaces=$(git config --bool hooks.trailingspaces)
 numberofcharsperline=$(git config --int hooks.numberofcharsperline)
 regexpforcommittitle=$(git config hooks.regexpforcommittitle)
 nobeatymergecommits=$(git config --bool hooks.nobeatymergecommits)
+verbose=$(git config --bool hooks.verbose)
 
 # Initialize some default values
 if [[ $numberofcharsperline -eq 0 ]]; then
@@ -95,6 +99,10 @@ validate_ref()
     fi
 }
 
+if [ "$verbose" != "false" ]; then
+    echo "We have $oldrev..$newrev for $refname range"
+fi
+
 if [ "$oldrev" = "$zero" ]; then
     # list everything reachable from newrev but not any heads
     for ref in $(git rev-list $(git for-each-ref --format='%(refname)' refs/heads/* | sed 's/^/\^/') "$newrev"); do
@@ -102,6 +110,9 @@ if [ "$oldrev" = "$zero" ]; then
     done
 else
     for ref in $(git rev-list "$oldrev..$newrev"); do
+        if [ "$verbose" != "false" ]; then
+            echo "Validating $ref"
+        fi
         validate_ref $ref
     done
 fi
