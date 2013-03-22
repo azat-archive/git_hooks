@@ -16,7 +16,7 @@
 #   This install regexp for commit title (first line of message), if not
 #   matched regexp, return 0. Regexp for $(git grep -E)
 #   By default: empty
-# hooks.nobeatymergecommits
+# hooks.beatymergecommits
 #   This will don't check merge commits
 #   By default: false
 # hooks.verbose
@@ -51,7 +51,7 @@ fi
 trailingspaces=$(git config --bool hooks.trailingspaces)
 numberofcharsperline=$(git config --int hooks.numberofcharsperline)
 regexpforcommittitle=$(git config hooks.regexpforcommittitle)
-nobeatymergecommits=$(git config --bool hooks.nobeatymergecommits)
+beatymergecommits=$(git config --bool hooks.beatymergecommits)
 verbose=$(git config --bool hooks.verbose)
 
 # Initialize some default values
@@ -70,8 +70,8 @@ validate_ref()
         exit 1
     fi
 
-    # hooks.nobeatymergecommits
-    if [ "$nobeatymergecommits" != "false" ] && [[ $(git show --pretty=%p $ref | head -n1 | awk '{print NF}') -gt 1 ]]; then
+    # hooks.beatymergecommits
+    if [ "$beatymergecommits" = "false" ] && [[ $(git show --pretty=%p $ref | head -n1 | awk '{print NF}') -gt 1 ]]; then
         debug_message "$ref is a merge commit. And won't be checked."
         return
     fi
