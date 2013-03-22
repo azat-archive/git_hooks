@@ -59,6 +59,11 @@ validate_ref()
         exit 1
     fi
 
+    # don't check "tree" commits.
+    if [[ $(git show $ref | head -n1 | grep -q "^tree ") ]]; then
+        return
+    fi
+
     # hooks.nobeatymergecommits
     if [ "$nobeatymergecommits" != "false" ] && [[ $(git show --pretty=%p $ref | head -n1 | awk '{print NF}') -gt 1 ]]; then
         return
