@@ -24,6 +24,13 @@
 #   By default: false
 #
 
+function debug_message()
+{
+    if [ "$verbose" != "false" ]; then
+        echo $*
+    fi
+}
+
 # --- Command line
 refname="$1"
 oldrev="$2"
@@ -65,6 +72,7 @@ validate_ref()
 
     # hooks.nobeatymergecommits
     if [ "$nobeatymergecommits" != "false" ] && [[ $(git show --pretty=%p $ref | head -n1 | awk '{print NF}') -gt 1 ]]; then
+        debug_message "$ref is a merge commit. And won't be checked."
         return
     fi
 
@@ -99,9 +107,7 @@ validate_ref()
     fi
 }
 
-if [ "$verbose" != "false" ]; then
-    echo "We have $oldrev..$newrev for $refname range"
-fi
+debug_message "We have $oldrev..$newrev for $refname range"
 
 if [ "$oldrev" = "$zero" ]; then
     # list everything reachable from newrev but not any heads
@@ -110,9 +116,7 @@ if [ "$oldrev" = "$zero" ]; then
     done
 else
     for ref in $(git rev-list "$oldrev..$newrev"); do
-        if [ "$verbose" != "false" ]; then
-            echo "Validating $ref"
-        fi
+        debug_message "Validating $ref"
         validate_ref $ref
     done
 fi

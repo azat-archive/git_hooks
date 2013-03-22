@@ -20,6 +20,13 @@
 #   By default: false
 #
 
+function debug_message()
+{
+    if [ "$verbose" != "false" ]; then
+        echo $*
+    fi  
+}
+
 # --- Command line
 refname="$1"
 oldrev="$2"
@@ -49,9 +56,7 @@ if [[ $numberofcharsperline -eq 0 ]]; then
     numberofcharsperline=80
 fi
 
-if [ "$verbose" != "false" ]; then
-    "We have $oldrev..$newrev for $refname range"
-fi
+debug_message "We have $oldrev..$newrev for $refname range"
 
 # Newly created ref. 
 zero="0000000000000000000000000000000000000000"
