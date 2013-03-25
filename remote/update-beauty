@@ -13,8 +13,13 @@
 #   This int sets number of chars per commit line.
 #   By default 80 characters.
 # hooks.regexpforcommittitle
-#   This install regexp for commit title (first line of message), if not
-#   matched regexp, return 0. Regexp for $(git grep -E)
+#   This install regexp for commit title (first line of message).
+#   Regexp for $(git grep -E)
+#   By default: empty
+# hooks.invertregexpforpatchnewchanges
+#   This install invert regexp for patch new changes (that start with +).
+#   If new changes will match this regexp, it will be rejected.
+#   Regexp for $(git grep -E)
 #   By default: empty
 # hooks.beatymergecommits
 #   This will don't check merge commits
@@ -51,6 +56,7 @@ fi
 trailingspaces=$(git config --bool hooks.trailingspaces)
 numberofcharsperline=$(git config --int hooks.numberofcharsperline)
 regexpforcommittitle=$(git config hooks.regexpforcommittitle)
+invertregexpforpatchnewchanges=$(git config hooks.invertregexpforpatchnewchanges)
 beatymergecommits=$(git config --bool hooks.beatymergecommits)
 verbose=$(git config --bool hooks.verbose)
 
@@ -102,6 +108,16 @@ validate_ref()
         if [[ $line_with_trailing_spaces -gt 0 ]]; then
             echo "*** New changes, contain trailing spaces in $ref:"
             echo "    Counted: $line_with_trailing_spaces lines. Fix it first."
+            exit 1
+        fi
+    fi
+
+    # hooks.invertregexpforpatchnewchanges
+    if [ ! -z "$invertregexpforpatchnewchanges" ]; then
+        line_matched_invert_regexp=$(git diff $ref^..$ref | grep '^+' | grep -E $invertregexpforpatchnewchanges | wc -l)
+        if [[ $line_matched_invert_regexp -gt 0 ]]; then
+            echo "*** New changes, match invert regexp '${invertregexpforpatchnewchanges}' in $ref:"
+            echo "    Counted: $line_matched_invert_regexp lines. Fix it first."
             exit 1
         fi
     fi
