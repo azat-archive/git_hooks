@@ -6,6 +6,9 @@
 # And it _can_ test code for newly create refs.
 # (Thanks to http://stackoverflow.com/a/3512275/328260)
 #
+# hooks.crlfpatches
+#   This boolean sets whether patch can have CRLF (\r\n)
+#   By default they won't be allowed.
 # hooks.trailingspaces
 #   This boolean sets whether commit can have trailing spaces.
 #   By default they won't be allowed.
@@ -54,6 +57,7 @@ fi
 
 # --- Config
 trailingspaces=$(git config --bool hooks.trailingspaces)
+crlfpatches=$(git config --bool hooks.crlfpatches)
 numberofcharsperline=$(git config --int hooks.numberofcharsperline)
 regexpforcommittitle=$(git config hooks.regexpforcommittitle)
 invertregexpforpatchnewchanges=$(git config hooks.invertregexpforpatchnewchanges)
@@ -108,6 +112,16 @@ validate_ref()
         if [[ $line_with_trailing_spaces -gt 0 ]]; then
             echo "*** New changes, contain trailing spaces in $ref:"
             echo "    Counted: $line_with_trailing_spaces lines. Fix it first."
+            exit 1
+        fi
+    fi
+
+    # hooks.crlfpatches
+    if [ "$crlfpatches" != "false" ]; then
+        line_with_crlf=$(git diff $ref^..$ref | grep '^+' | grep $'\r\n$' | wc -l)
+        if [[ $line_with_crlf -gt 0 ]]; then
+            echo "*** New changes, contain CRLF in $ref:"
+            echo "    Counted: $line_with_crlf lines. Fix it first."
             exit 1
         fi
     fi
