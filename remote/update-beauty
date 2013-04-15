@@ -118,7 +118,7 @@ validate_ref()
 
     # hooks.crlfpatches
     if [ "$crlfpatches" != "false" ]; then
-        line_with_crlf=$(git diff $ref^..$ref | grep '^+' | grep $'\r\n$' | wc -l)
+        line_with_crlf=$(git diff $ref^..$ref | grep '^+' | grep $'\r$' | wc -l)
         if [[ $line_with_crlf -gt 0 ]]; then
             echo "*** New changes, contain CRLF in $ref:"
             echo "    Counted: $line_with_crlf lines. Fix it first."
