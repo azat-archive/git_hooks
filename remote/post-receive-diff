@@ -58,7 +58,7 @@ while read oldrev newrev refname; do
                 --output-directory=/run/shm \
                 --subject-prefix="$projectname/${refname#refs/heads/}" \
                 "$oldrev..$newrev")
-    git send-email --confirm=never "$FILE"
+    git send-email --confirm=never "$FILE" > /dev/null 2>&1
     rm $FILE
 done
 
