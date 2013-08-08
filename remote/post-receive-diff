@@ -41,7 +41,8 @@ if [ -z "$projectname" ]; then
     projectname="${projectname%.git}"
 fi
 
-isnull () {
+isnull()
+{
     echo "$1" | grep -qE '^0+$'
 }
 
@@ -51,8 +52,13 @@ while read oldrev newrev refname; do
        	continue
     fi
 
-    git-format-patch --subject-prefix="$projectname/${refname#refs/heads/}" \
-                     --stdout "$oldrev..$newrev" |
-                     formail -s /home/or/git-helpers/copyheaders.pl | formail -I "To: $recipients" -R From: Patch-Author: -I "From " -I Date: -s /usr/sbin/sendmail -t
+    # TODO: don't use FS for this
+    FILE=$(git format-patch \
+                --no-binary \
+                --output-directory=/run/shm \
+                --subject-prefix="$projectname/${refname#refs/heads/}" \
+                "$oldrev..$newrev")
+    git send-email --confirm=never "$FILE"
+    rm $FILE
 done
 
