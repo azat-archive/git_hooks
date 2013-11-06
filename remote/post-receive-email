@@ -650,17 +650,12 @@ add_recipients()
 	if [ ! "$scancommitforcc" = "true" ] && [ ! "$scancommitforemails" = "true" ]; then
 		return
 	fi
-
-	# Revision range passed to rev-list differs for new vs. updated
-	# branches.
-	if [ "$change_type" = create ]
-	then
-		# Show all revisions exclusive to this (new) branch.
-		revspec=$newrev
-	else
-		# Branch update; show revisions not part of $oldrev.
-		revspec=$oldrev..$newrev
+	if [ "$change_type" = create ]; then
+		return
 	fi
+
+	# Branch update; show revisions not part of $oldrev.
+	revspec=$oldrev..$newrev
 
 	email_regexp="\b[a-z0-9.-]+@[a-z0-9.-]+\.[a-z0-9.-]+\b"
 	new_recipients=""
