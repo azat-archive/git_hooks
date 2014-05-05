@@ -216,7 +216,7 @@ generate_email()
 	if [ -z "$describe" ]; then
 		describe=$rev
 	fi
-	oneline=$(git log --oneline $rev 2>/dev/null)
+	oneline=$(git log --oneline -1 $rev 2>/dev/null)
 
 	generate_email_header
 
