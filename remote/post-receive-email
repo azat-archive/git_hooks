@@ -216,6 +216,7 @@ generate_email()
 	if [ -z "$describe" ]; then
 		describe=$rev
 	fi
+	oneline=$(git log --oneline $rev 2>/dev/null)
 
 	generate_email_header
 
@@ -241,6 +242,14 @@ generate_email()
 
 generate_email_header()
 {
+	subject="${emailprefix}$projectdesc $refname_type $short_refname ${change_type}d. $describe"
+
+	# Shorter and more understandable subject in simple case.
+	# XXX: do we need to respect $emailprefix here?
+	if [ "$refname_type" = "branch" ] && [ "$change_type" = "update" ]; then
+		subject="[${projectdesc}/${short_refname}] ${oneline}"
+	fi
+
 	# --- Email (all stdout will be the email)
 	# Generate header
 	cat <<-EOF
