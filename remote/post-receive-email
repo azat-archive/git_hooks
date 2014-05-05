@@ -246,7 +246,9 @@ generate_email_header()
 
 	# Shorter and more understandable subject in simple case.
 	# XXX: do we need to respect $emailprefix here?
-	if [ "$refname_type" = "branch" ] && [ "$change_type" = "update" ]; then
+	if [ "$simplesubject" = "true" ] &&
+		[ "$refname_type" = "branch" ] &&
+		[ "$change_type" = "update" ]; then
 		subject="[${projectdesc}/${short_refname}] ${oneline}"
 	fi
 
@@ -786,6 +788,7 @@ diffopts=$(git config hooks.diffopts)
 : ${diffopts:="--stat --summary --find-copies-harder"}
 scancommitforcc=$(git config --bool hooks.scancommitforcc)
 scancommitforemails=$(git config --bool hooks.scancommitforemails)
+simplesubject=$(git config --bool hooks.simplesubject)
 
 # --- Main loop
 # Allow dual mode: run from the command line just like the update hook, or
