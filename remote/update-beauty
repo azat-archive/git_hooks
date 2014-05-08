@@ -27,6 +27,11 @@
 # hooks.beatymergecommits
 #   This will don't check merge commits
 #   By default: false
+# hooks.gofmt
+#   Perform go fmt validation of Go code
+#   By default: false
+# hooks.gofmtoptions
+#   Options given to go fmt
 # hooks.verbose
 #   Some useful information for debugging
 #   By default: false
@@ -62,7 +67,9 @@ numberofcharsperline=$(git config --int hooks.numberofcharsperline)
 regexpforcommittitle=$(git config hooks.regexpforcommittitle)
 invertregexpforpatchnewchanges=$(git config hooks.invertregexpforpatchnewchanges)
 beatymergecommits=$(git config --bool hooks.beatymergecommits)
-verbose=$(git config --bool hooks.verbose)
+gofmt=$(git config --bool hooks.gofmt)
+gofmtoptionstemp=$(git config hooks.gofmtoptions)
+gofmtoptions=${gofmtoptionstemp:-"-tabs=false -tabwidth=4 -s=true"}
 
 # Initialize some default values
 if [[ $numberofcharsperline -eq 0 ]]; then
@@ -134,6 +141,19 @@ validate_ref()
             echo "    Counted: $line_matched_invert_regexp lines. Fix it first."
             exit 1
         fi
+    fi
+
+    # hooks.gofmt
+    if [ "$gofmt" == "true" ]; then
+        files=$(git diff --name-only $ref^..$ref)
+        for f in $files; do
+            fmt=$(git cat-file -p $ref:$f | gofmt $gofmtoptions -d=true 2>&1)
+            if [ ! -z "$fmt" ]; then
+                echo "*** Error you need to perform gofmt on $f <$ref>"
+                debug_message "$fmt"
+                exit 1
+            fi
+        done
     fi
 }
 
