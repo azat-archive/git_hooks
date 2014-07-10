@@ -69,7 +69,7 @@ invertregexpforpatchnewchanges=$(git config hooks.invertregexpforpatchnewchanges
 beatymergecommits=$(git config --bool hooks.beatymergecommits)
 gofmt=$(git config --bool hooks.gofmt)
 gofmtoptionstemp=$(git config hooks.gofmtoptions)
-gofmtoptions=${gofmtoptionstemp:-"-tabs=false -tabwidth=4 -s=true"}
+gofmtoptions=${gofmtoptionstemp:-"-s=true"}
 
 # Initialize some default values
 if [[ $numberofcharsperline -eq 0 ]]; then
