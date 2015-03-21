@@ -38,6 +38,9 @@
 # hooks.clangformatoptions
 #   Options for clang-format (not config)
 #   Example: "{ TabWidth: 4, Language: Cpp }"
+# hooks.fmtfatal
+#   To we reject if we have changes after gofmt/clangformat, or just show diff
+#   By default: false (non fatal)
 # hooks.verbose
 #   Some useful information for debugging
 #   By default: false
@@ -73,6 +76,7 @@ numberofcharsperline=$(git config --int hooks.numberofcharsperline)
 regexpforcommittitle=$(git config hooks.regexpforcommittitle)
 invertregexpforpatchnewchanges=$(git config hooks.invertregexpforpatchnewchanges)
 beatymergecommits=$(git config --bool hooks.beatymergecommits)
+fmtfatal=$(git config --bool hooks.fmtfatal)
 
 gofmt=$(git config --bool hooks.gofmt)
 gofmtoptionstemp=$(git config hooks.gofmtoptions)
@@ -87,6 +91,11 @@ if [[ $numberofcharsperline -eq 0 ]]; then
 fi
 if [ -n "$clangformatoptions" ]; then
     clangformatoptions="-style=\"$clangformatoptions\""
+fi
+if [ "$fmtfatal" == true ]; then
+    fmtprefix="Error"
+else
+    fmtprefix="Warning"
 fi
 
 zero="0000000000000000000000000000000000000000"
@@ -162,9 +171,9 @@ validate_ref()
         for f in $files; do
             fmt=$(git cat-file -p $ref:$f | gofmt $gofmtoptions -d=true 2>&1)
             if [ -n "$fmt" ]; then
-                echo "*** Error you need to perform gofmt on $f <$ref>"
+                echo "*** $fmtprefix you need to perform gofmt on $f <$ref>"
                 debug_message "$fmt"
-                exit 1
+                [ "$fmtfatal" == "true" ] && exit 1
             fi
         done
     fi
@@ -175,9 +184,9 @@ validate_ref()
         for f in $files; do
             fmt=$(diff -u <(git cat-file -p $ref:$f) <(git cat-file -p $ref:$f | eval $clangformat $clangformatoptions))
             if [ -n "$fmt" ]; then
-                echo "*** Error you need to perform clang-format on $f <$ref>"
+                echo "*** $fmtprefix you need to perform clang-format on $f <$ref>"
                 debug_message "$fmt"
-                exit 1
+                [ "$fmtfatal" == "true" ] && exit 1
             fi
         done
     fi
