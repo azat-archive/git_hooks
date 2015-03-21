@@ -182,12 +182,23 @@ validate_ref()
     if [ -n "$clangformat" ]; then
         files=$(git diff --name-only $ref^..$ref | egrep "\.(cpp|cc|c|h|hpp|cxx)$")
         for f in $files; do
-            fmt=$(diff -u <(git cat-file -p $ref:$f) <(git cat-file -p $ref:$f | eval $clangformat $clangformatoptions))
-            if [ -n "$fmt" ]; then
-                echo "*** $fmtprefix you need to perform clang-format on $f <$ref>"
-                debug_message "$fmt"
-                [ "$fmtfatal" == "true" ] && exit 1
-            fi
+            ranges=$(git diff $ref^..$ref -- $f | egrep -o '^@@ -[0-9]+,[0-9]+ \+[0-9]+(,[0-9]+|) @@' | cut -d' ' -f3)
+            for r in $ranges; do
+                [[ ! $r =~ ^\+([0-9]+)(,([0-9]+)|)$ ]] && continue
+                start=${BASH_REMATCH[1]}
+                [ -n "${BASH_REMATCH[3]}" ] && length=${BASH_REMATCH[3]} || length=1
+                end=$((start + length))
+
+                fmt=$(diff -u \
+                           <(git cat-file -p $ref:$f) \
+                           <(git cat-file -p $ref:$f | eval $clangformat $clangformatoptions -lines $start:$end)
+                      )
+                if [ -n "$fmt" ]; then
+                    echo "*** $fmtprefix you need to perform clang-format on $f <$ref> ($start:$end)"
+                    debug_message "$fmt"
+                    [ "$fmtfatal" == "true" ] && exit 1
+                fi
+            done
         done
     fi
 }
