@@ -169,6 +169,9 @@ validate_ref()
     if [ "$gofmt" == "true" ]; then
         files=$(git diff --name-only $ref^..$ref | grep .*.go$ )
         for f in $files; do
+            if [ ! -f "$f" ]; then
+                continue
+            fi
             fmt=$(git cat-file -p $ref:$f | gofmt $gofmtoptions -d=true 2>&1)
             if [ -n "$fmt" ]; then
                 echo "*** $fmtprefix you need to perform gofmt on $f <$ref>"
