@@ -221,6 +221,9 @@ validate_ref()
 debug_message "We have $oldrev..$newrev for $refname range"
 
 if [ "$oldrev" = "$zero" ]; then
+    # Ugh, hackish..
+    git show $newrev:.gitattributes > info/attributes 2>/dev/null
+
     # list everything reachable from newrev but not any heads
     for ref in $(git rev-list $(git for-each-ref --format='%(refname)' refs/heads/* | sed 's/^/\^/') "$newrev"); do
         validate_ref $ref
