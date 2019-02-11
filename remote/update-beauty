@@ -8,10 +8,12 @@
 #
 # hooks.crlfpatches
 #   This boolean sets whether patch can have CRLF (\r\n)
-#   By default they won't be allowed.
+#   By default they won't be allowed (for text files)
+#   (ignores "binary" files, i.e. files that has "text" attribute unset)
 # hooks.trailingspaces
 #   This boolean sets whether commit can have trailing spaces.
 #   By default they won't be allowed.
+#   (ignores "binary" files, i.e. files that has "text" attribute unset)
 # hooks.numberofcharsperline
 #   This int sets number of chars per commit line.
 #   By default 80 characters.
@@ -24,6 +26,7 @@
 #   If new changes will match this regexp, it will be rejected.
 #   Regexp for $(git grep -E)
 #   By default: empty
+#   (ignores "binary" files, i.e. files that has "text" attribute unset)
 # hooks.beatymergecommits
 #   This will don't check merge commits
 #   By default: false
@@ -137,32 +140,41 @@ validate_ref()
 
     # hooks.trailingspaces
     if [ "$trailingspaces" != "false" ]; then
-        line_with_trailing_spaces=$(git diff $ref^..$ref | grep '^+' | grep -P '(^[\t ]|[\t ]$)' | wc -l)
-        if [[ $line_with_trailing_spaces -gt 0 ]]; then
-            echo "*** New changes, contain trailing spaces in $ref:"
-            echo "    Counted: $line_with_trailing_spaces lines. Fix it first."
-            exit 1
-        fi
+        for file in $(git diff --name-only $ref^..$ref); do
+            git check-attr text -- "$file" | grep -q ' text: unset$' && continue
+            line_with_trailing_spaces=$(git diff $ref^..$ref -- "$file" | grep '^+' | grep -P '(^[\t ]|[\t ]$)' | wc -l)
+            if [[ $line_with_trailing_spaces -gt 0 ]]; then
+                echo "*** New changes, contain trailing spaces in $ref:"
+                echo "    Counted: $line_with_trailing_spaces lines in $file. Fix it first."
+                exit 1
+            fi
+        done
     fi
 
     # hooks.crlfpatches
     if [ "$crlfpatches" != "false" ]; then
-        line_with_crlf=$(git diff $ref^..$ref | grep '^+' | grep $'\r$' | wc -l)
-        if [[ $line_with_crlf -gt 0 ]]; then
-            echo "*** New changes, contain CRLF in $ref:"
-            echo "    Counted: $line_with_crlf lines. Fix it first."
-            exit 1
-        fi
+        for file in $(git diff --name-only $ref^..$ref); do
+            git check-attr text -- "$file" | grep -q ' text: unset$' && continue
+            line_with_crlf=$(git diff $ref^..$ref -- "$file" | grep '^+' | grep $'\r$' | wc -l)
+            if [[ $line_with_crlf -gt 0 ]]; then
+                echo "*** New changes, contain CRLF in $ref:"
+                echo "    Counted: $line_with_crlf lines in $file. Fix it first."
+                exit 1
+            fi
+        done
     fi
 
     # hooks.invertregexpforpatchnewchanges
     if [ ! -z "$invertregexpforpatchnewchanges" ]; then
-        line_matched_invert_regexp=$(git diff $ref^..$ref | grep '^+' | grep -E $invertregexpforpatchnewchanges | wc -l)
-        if [[ $line_matched_invert_regexp -gt 0 ]]; then
-            echo "*** New changes, match invert regexp '${invertregexpforpatchnewchanges}' in $ref:"
-            echo "    Counted: $line_matched_invert_regexp lines. Fix it first."
-            exit 1
-        fi
+        for file in $(git diff --name-only $ref^..$ref); do
+            git check-attr text -- "$file" | grep -q ' text: unset$' && continue
+            line_matched_invert_regexp=$(git diff $ref^..$ref -- "$file" | grep '^+' | grep -E $invertregexpforpatchnewchanges | wc -l)
+            if [[ $line_matched_invert_regexp -gt 0 ]]; then
+                echo "*** New changes, match invert regexp '${invertregexpforpatchnewchanges}' in $ref:"
+                echo "    Counted: $line_matched_invert_regexp lines in $file. Fix it first."
+                exit 1
+            fi
+        done
     fi
 
     # hooks.gofmt
